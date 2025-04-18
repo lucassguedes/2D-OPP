@@ -21,6 +21,7 @@ Data* read_instance(char* file_path){
         int i, w, h, d, b, p;
         sscanf(line, "%d %d %d %d %d %d", &i, &w, &h, &d, &b, &p);
 
+        data->items[i-1].unique_id = i;
         data->items[i-1].width = w;
         data->items[i-1].height = h;
         data->items[i-1].ncopies = b;

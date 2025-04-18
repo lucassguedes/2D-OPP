@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 typedef struct {
+    int unique_id;
     int width;
     int height;
     int ncopies; // maximum number of copies of item i

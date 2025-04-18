@@ -197,11 +197,22 @@ BestFitResult* best_fit(Data* data){
         
         
         items[insertion_info.index].ncopies--;
+        printf("\033[0;32minsertion_info.index = %d, packed_items = %d\033[0m\n", insertion_info.index, packed_items);
+        result->items_status[packed_items].index = items[insertion_info.index].unique_id;
+        result->items_status[packed_items].rotated = insertion_info.rotated;
+        result->items_status[packed_items].x = x;
+        result->items_status[packed_items].y = y;
+
+        printf("Status: id = %d, x = %d, y = %d, rotaded = %d\n", result->items_status[packed_items].index, result->items_status[packed_items].x, result->items_status[packed_items].y, result->items_status[packed_items].rotated);
+
+
         packed_items++;
         printf("Insertion_info.index: %d\n", insertion_info.index);
         printf("Item width = %d, Item height: %d\n", item_width, item_height);
 
         update_niches(niches, gap_info, insertion_info, item_width, item_height);
+
+
 
         printf("Item to insert:\n");
         printf("Item %d - width = %d, height = %d ", insertion_info.index, item_width, item_height);

@@ -20,7 +20,7 @@ typedef struct {
     int index; // Index of item
     int x;
     int y;
-    bool rotaded;
+    bool rotated;
 }BoxStatus;
 
 typedef struct {
