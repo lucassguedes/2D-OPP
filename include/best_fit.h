@@ -44,10 +44,15 @@ typedef enum {
     SHORTEST_NEIGHBOR_POLICY,
 }PlacementPolicy;
 
-BestFitResult* best_fit(Data* data);
 int            compare_boxes(const void* a, const void* b);
+int            get_x_value(GapInfo gap, PlacementPolicy policy, int item_width, int niches[], int n_niches);
+int            get_highest_niche(int niches[], int n_niches);
+
+BestFitResult* best_fit(Data* data);
 GapInfo        find_lowest_gap(int niches[], int n_niches);
+InsertionInfo  find_best_fit_idx(GapInfo gap, Box items[], int nitems);
 
-
+void           update_niches(int niches[], GapInfo gap, InsertionInfo info, int item_width, int item_height); 
+void           ignore_gap(GapInfo gap, int niches[], int n_niches);
 
 #endif

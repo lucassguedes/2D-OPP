@@ -108,10 +108,10 @@ void update_niches(int niches[], GapInfo gap, InsertionInfo info, int item_width
 
 void ignore_gap(GapInfo gap, int niches[], int n_niches){
     int lowest_neighbor_height = INT_MAX;
-
+    printf("Ignoring the gap at pos %d with width %d\n", gap.index, gap.width);
     if(gap.index - 1 < 0){
         lowest_neighbor_height = niches[gap.index + gap.width];
-    }else if(gap.index + gap.width > n_niches){
+    }else if(gap.index + gap.width >= n_niches){
         lowest_neighbor_height = niches[gap.index - 1];
     }else{
         if(niches[gap.index + gap.width] < niches[gap.index - 1]){
@@ -122,15 +122,27 @@ void ignore_gap(GapInfo gap, int niches[], int n_niches){
     }
 
     for(int i = gap.index; i < gap.index + gap.width; i++){
+        printf("Incrementing %d to the height....\n", lowest_neighbor_height);
         niches[i] += lowest_neighbor_height;
     }
 }
 
+int get_highest_niche(int niches[], int n_niches){
+    int highest_niche = INT_MIN;
+
+    for(int i = 0; i < n_niches; i++){
+        if(niches[i] > highest_niche){
+            highest_niche = niches[i];
+        }
+    }
+
+    return highest_niche;
+}
+
 BestFitResult* best_fit(Data* data){
 
-    BestFitResult* result = (BestFitResult*)malloc(sizeof(BestFitResult));
+    BestFitResult* final_result = NULL;
 
-    result->items_status = (BoxStatus*)malloc(sizeof(BoxStatus)*data->nunique_items);
     int packed_items = 0;
 
     const int n_niches = data->width;
@@ -141,89 +153,133 @@ BestFitResult* best_fit(Data* data){
     /*All niches have 0 height values in the beginning*/
     for(int i = 0; i < data->width; i++) niches[i] = 0;
 
-    Box items[data->nitems];
+    Box pre_processed_items[data->nitems];
 
     /*Copying the items to a local variable*/
     int item_counter = 0; 
     for(int i = 0; i < data->nitems; i++){
 
-        items[item_counter] = data->items[i];
-        if(items[item_counter].height > items[item_counter].width){
+        pre_processed_items[item_counter] = data->items[i];
+        if(pre_processed_items[item_counter].height > pre_processed_items[item_counter].width){
             /*Rotate the item if its height is greater than its width*/
-            int aux = items[item_counter].height;
-            items[item_counter].height = items[item_counter].width;
-            items[item_counter].width = aux;
-            items[item_counter].rotated = true;
+            int aux = pre_processed_items[item_counter].height;
+            pre_processed_items[item_counter].height = pre_processed_items[item_counter].width;
+            pre_processed_items[item_counter].width = aux;
+            pre_processed_items[item_counter].rotated = true;
         }
         item_counter++;
     }
 
-    qsort(items, data->nitems, sizeof(Box), compare_boxes);
+    qsort(pre_processed_items, data->nitems, sizeof(Box), compare_boxes);
 
     printf("All items:\n");
     for(int i = 0; i < data->nitems; i++){
-        printf("Item %d - width = %d, height = %d\n", i, items[i].width, items[i].height);
+        printf("Item %d - width = %d, height = %d\n", i, pre_processed_items[i].width, pre_processed_items[i].height);
     }
+
 
     GapInfo gap_info;
     InsertionInfo insertion_info;
     int x, y, item_width, item_height;
-    PlacementPolicy policy = LEFTMOST_POLICY;
+    
+    PlacementPolicy policies[] = {LEFTMOST_POLICY, TALLEST_NEIGHBOR_POLICY, SHORTEST_NEIGHBOR_POLICY};
+    PlacementPolicy curr_policy = LEFTMOST_POLICY;
+    const int last_policy = 2;
 
+    BestFitResult* policy_result[3];
 
-    while(packed_items < data->nunique_items){
-        gap_info = find_lowest_gap(niches, n_niches);
-
-        y = niches[gap_info.index];
-        
-        insertion_info = find_best_fit_idx(gap_info, items, data->nitems);
-
-        if(insertion_info.index == ITEM_NOT_FOUND){
-            printf("Item not found...\n");
-            ignore_gap(gap_info, niches, n_niches);
-            continue;
-        }
-
-        if(insertion_info.rotated != items[insertion_info.index].rotated){
-            item_width = items[insertion_info.index].height;
-            item_height = items[insertion_info.index].width;
-        }else{
-            item_width = items[insertion_info.index].width;
-            item_height = items[insertion_info.index].height;
-        }
-
-
-        x = get_x_value(gap_info, policy, item_width, niches, n_niches);
-        
-        
-        items[insertion_info.index].ncopies--;
-        printf("\033[0;32minsertion_info.index = %d, packed_items = %d\033[0m\n", insertion_info.index, packed_items);
-        result->items_status[packed_items].index = items[insertion_info.index].unique_id;
-        result->items_status[packed_items].rotated = insertion_info.rotated;
-        result->items_status[packed_items].x = x;
-        result->items_status[packed_items].y = y;
-
-        printf("Status: id = %d, x = %d, y = %d, rotaded = %d\n", result->items_status[packed_items].index, result->items_status[packed_items].x, result->items_status[packed_items].y, result->items_status[packed_items].rotated);
-
-
-        packed_items++;
-        printf("Insertion_info.index: %d\n", insertion_info.index);
-        printf("Item width = %d, Item height: %d\n", item_width, item_height);
-
-        update_niches(niches, gap_info, insertion_info, item_width, item_height);
-
-
-
-        printf("Item to insert:\n");
-        printf("Item %d - width = %d, height = %d ", insertion_info.index, item_width, item_height);
-        printf("at position x = %d and y = %d\n", x, y);
-
-        printf("Niches: ");
-        for(int i = 0; i < n_niches; i++){
-            printf("%3d ", niches[i]);
-        }
-        printf("\n");
+    for(int i = LEFTMOST_POLICY; i <= SHORTEST_NEIGHBOR_POLICY; i++){
+        policy_result[i] = (BestFitResult*)malloc(sizeof(BestFitResult));
+        policy_result[i]->items_status = (BoxStatus*)malloc(sizeof(BoxStatus)*data->nunique_items);
     }
 
-    return result;
+    int global_highest_niche = INT_MAX;
+    int current_highest_niche;
+    PlacementPolicy best_policy;
+
+    Box items[data->nitems];
+
+    
+    while(curr_policy <= last_policy){
+        packed_items = 0;
+
+        for(int i = 0; i < n_niches; i++){
+            niches[i] = 0;
+        }
+
+        for(int i = 0; i < data->nitems; i++){
+            items[i] = pre_processed_items[i];
+        }
+
+        while(packed_items < data->nunique_items){
+            gap_info = find_lowest_gap(niches, n_niches);
+    
+            y = niches[gap_info.index];
+            
+            insertion_info = find_best_fit_idx(gap_info, items, data->nitems);
+    
+            if(insertion_info.index == ITEM_NOT_FOUND){
+                printf("Item not found...\n");
+                ignore_gap(gap_info, niches, n_niches);
+                continue;
+            }
+    
+            if(insertion_info.rotated != items[insertion_info.index].rotated){
+                item_width = items[insertion_info.index].height;
+                item_height = items[insertion_info.index].width;
+            }else{
+                item_width = items[insertion_info.index].width;
+                item_height = items[insertion_info.index].height;
+            }
+    
+    
+            x = get_x_value(gap_info, policies[curr_policy], item_width, niches, n_niches);
+            
+            
+            items[insertion_info.index].ncopies--;
+            printf("\033[0;32minsertion_info.index = %d, packed_items = %d\033[0m\n", insertion_info.index, packed_items);
+            policy_result[curr_policy]->items_status[packed_items].index = items[insertion_info.index].unique_id;
+            policy_result[curr_policy]->items_status[packed_items].rotated = insertion_info.rotated;
+            policy_result[curr_policy]->items_status[packed_items].x = x;
+            policy_result[curr_policy]->items_status[packed_items].y = y;
+    
+            printf("Status: id = %d, x = %d, y = %d, rotaded = %d\n", policy_result[curr_policy]->items_status[packed_items].index, policy_result[curr_policy]->items_status[packed_items].x, policy_result[curr_policy]->items_status[packed_items].y, policy_result[curr_policy]->items_status[packed_items].rotated);
+
+            packed_items++;
+            update_niches(niches, gap_info, insertion_info, item_width, item_height);
+    
+    
+            printf("Niches: ");
+            for(int i = 0; i < n_niches; i++){
+                printf("%3d ", niches[i]);
+            }
+            printf("\n");
+            // getchar();
+        }
+
+        current_highest_niche = get_highest_niche(niches, n_niches);
+
+        printf("\033[0;33mAltura da solução: %d\033[0m\n", current_highest_niche);
+        if(current_highest_niche < global_highest_niche){
+            printf("\033[0;35mNova melhor altura encontrada: %d\033[0m\n", current_highest_niche);
+            global_highest_niche = current_highest_niche;
+            final_result = policy_result[curr_policy];
+            best_policy = curr_policy;
+        }
+
+        curr_policy++;
+    }
+
+
+
+    for(int p = LEFTMOST_POLICY; p <= SHORTEST_NEIGHBOR_POLICY; p++){
+        if(p != best_policy){
+            free(policy_result[p]->items_status);
+            free(policy_result[p]);
+        }
+    }
+    
+    
+
+    return final_result;
 }
