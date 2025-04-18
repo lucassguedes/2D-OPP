@@ -16,7 +16,7 @@
 #define SCALE 15
 
 
-void draw(Data* data,  BoxStatus* items_status);
+void draw(Data* data,  BoxStatus** items_status);
 
 
 static double colors[][3] = {

@@ -1,7 +1,7 @@
 #include "drawer.h"
 
-void draw(Data* data,  BoxStatus* items_status){
-    GLFWwindow* window;
+void draw(Data* data,  BoxStatus** items_status){
+    GLFWwindow* window = NULL;
 
     /* Initialize the library */
     if (!glfwInit())
@@ -66,22 +66,22 @@ void draw(Data* data,  BoxStatus* items_status){
         double lastXCoord = 0;
         for(int i = 0; i < data->nunique_items; i++){    
 
-            BoxStatus item = items_status[i];
+            BoxStatus* item = items_status[i];
 
             glColor3f(colors[itemCounter][0], colors[itemCounter][1], colors[itemCounter][2]);
             double itemWidth, itemHeight;
-            if(item.rotated){
-                itemWidth = data->items[item.index - 1].height;
-                itemHeight = data->items[item.index - 1].width;
+            if(item->rotated){
+                itemWidth = data->items[item->index - 1].height;
+                itemHeight = data->items[item->index - 1].width;
             }else{
-                itemWidth = data->items[item.index - 1].width;
-                itemHeight = data->items[item.index - 1].height;
+                itemWidth = data->items[item->index - 1].width;
+                itemHeight = data->items[item->index - 1].height;
             }
 
 
 
-            int x = stockSheetPos.x + item.x * scale;
-            int y = stockSheetPos.y + item.y * scale;
+            int x = stockSheetPos.x + item->x * scale;
+            int y = stockSheetPos.y + item->y * scale;
 
 
             glColor3f(colors[packedItemCounter][0], colors[packedItemCounter][1], colors[packedItemCounter][2]);
@@ -118,8 +118,6 @@ void draw(Data* data,  BoxStatus* items_status){
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-
-
+    glfwDestroyWindow(window);
     glfwTerminate();
-
 }

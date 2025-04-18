@@ -25,7 +25,7 @@ typedef struct {
 
 typedef struct {
     bool violated; // Indicates whether the maximum height was violated
-    BoxStatus* items_status;
+    BoxStatus** items_status;
 }BestFitResult;
 
 typedef struct {

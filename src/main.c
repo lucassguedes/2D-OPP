@@ -9,15 +9,23 @@ int main(int argc, char** argv){
     BestFitResult* bf_result = best_fit(data);
 
 
-    BoxStatus* items_status = bf_result->items_status;
+    BoxStatus** items_status = bf_result->items_status;
 
     printf("Boxes status:\n");
 
     for(int i = 0; i < data->nunique_items; i++){
-        printf("Box status - index = %d, x = %d, y = %d, rotated = %d\n", items_status[i].index, items_status[i].x, items_status[i].y, items_status[i].rotated);
+        printf("Box status - index = %d, x = %d, y = %d, rotated = %d\n", items_status[i]->index, items_status[i]->x, items_status[i]->y, items_status[i]->rotated);
     }
 
     draw(data, items_status);
+
+    for(int i = 0; i < data->nunique_items; i++){
+        free(bf_result->items_status[i]);
+    }
+
+    free(bf_result->items_status);
+    free(bf_result);
+
 
     destroy_data(data);
 
