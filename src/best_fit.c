@@ -12,14 +12,20 @@ GapInfo find_lowest_gap(int niches[], int n_niches){
     GapInfo info;
 
     info.width = 0;
-    for(int i = 0; i < n_niches; i++){
+    int i = 0;
+    while(i < n_niches){
         if(niches[i] < lowest_gap_height){
             lowest_gap_height = niches[i];
             info.index = i;
-            info.width = 1;
-        }else if(niches[i] == lowest_gap_height){
-            info.width++;
+            info.width = 0;
+
+            while(niches[i] == lowest_gap_height){
+                i++;
+                info.width++;
+            }
+            continue;
         }
+        i++;
     }
 
     return info;
@@ -31,6 +37,8 @@ InsertionInfo find_best_fit_idx(GapInfo gap, Box items[], int nitems){
     info.index = GAP_NOT_FOUND;
     int best_diff = INT_MAX;
     int diff;
+
+    printf("Gap index: %d, Gap width: %d\n", gap.index, gap.width);
     for(int i = 0; i < nitems; i++){
 
         if(!items[i].ncopies) continue;
@@ -256,6 +264,32 @@ BestFitResult* best_fit(Data* data){
             printf("\n");
             // getchar();
         }
+
+
+
+        /*Solution improvement*/
+
+        //Find the highest tower
+        // int item_height;
+        // int highest_tower_idx;
+        // int max_height = INT_MIN;
+        // int tower_height;
+        // for(int i = 0; i < data->nitems; i++){
+        //     BoxStatus status = policy_result[curr_policy]->items_status[i];
+        //     Box box = data->items[policy_result[curr_policy]->items_status[i].index - 1];
+
+        //     item_height = (status.rotated) ? box.width : box.height;
+        //     tower_height = status.y + item_height;
+
+        //     if(tower_height > max_height){
+        //         highest_tower_idx = i;
+        //         max_height = tower_height;
+        //     }
+        // }
+
+
+
+
 
         current_highest_niche = get_highest_niche(niches, n_niches);
 
